@@ -1,19 +1,18 @@
 <?php
 
 
-namespace AndPHP\HyperfSign\Annotation;
-
+namespace AndPHP\HyperfSign\Aspect;
 use Hyperf\Contract\ConfigInterface;
+use Hyperf\Di\Aop\AbstractAspect;
+use Hyperf\Di\Annotation\Aspect;
+use Hyperf\Di\Aop\ProceedingJoinPoint;
+use Hyperf\HttpServer\Contract\ResponseInterface;
 use Hyperf\Di\Annotation\Inject;
-use Hyperf\Di\Annotation\AbstractAnnotation;
-
+use Hyperf\HttpServer\Contract\RequestInterface;
 /**
- * @Annotation
- * @Target({"CLASS","METHOD"})
- * Class Sign
- * @package AndPHP\HyperfSign\Annotation
+ * @Aspect
  */
-class Sign extends AbstractAnnotation
+class Sign extends AbstractAspect
 {
     /**
      * @Inject()
@@ -21,57 +20,63 @@ class Sign extends AbstractAnnotation
      */
     private $config;
 
-
-    // 获取sign
-    public function getSign(array $data) {
-        $secret = $this->config->get('sign.secret','secret');
-        $key = $this->config->get('sign.key','key');
-        var_dump($this->config);
-        array_push($data,["key"=>$key,'timestamp'=>time()]);
-        // 对数组的值按key排序
-        ksort($data);
-        // 生成url的形式
-        $params = http_build_query($data);
-        // 生成sign
-        $data['sign'] = md5($params . $secret);
-        return $data;
-    }
+    /**
+     * @Inject()
+     * @var RequestInterface
+     */
+    private $request;
 
     /**
-     * 后台验证sign是否合法
-     * @param  [type] $secret [description]
-     * @param  [type] $data   [description]
-     * @return [type]         [description]
+     * @Inject()
+     * @var ResponseInterface
      */
-    public function verifySign(array $data) {
-        $secret = $this->config->get('sign.secret');
-        $expires_in = $this->config->get('sign.expires_in');
-        // 验证参数中是否有签名
-        if (!isset($data['sign']) || !$data['sign']) {
-            echo '发送的数据签名不存在';
-            die();
+    private $response;
+
+    public $annotations = [
+        \AndPHP\HyperfSign\Annotation\Sign::class,
+    ];
+    public function process(ProceedingJoinPoint $proceedingJoinPoint)
+    {
+        if(!empty($proceedingJoinPoint->getAnnotationMetadata()->method)){
+            /**
+             * @var \AndPHP\HyperfSign\Annotation\Sign $metaClass
+             */
+            $metaClass = $proceedingJoinPoint->getAnnotationMetadata()->method[\AndPHP\HyperfSign\Annotation\Sign::class];
+            $sign = [
+                "key"        => "c4ca4238a0b923820dcc509a6f75849b",
+                "secret"     => "28c8edde3d61a0411511d3b1866f0636",
+                "expires_in" => 600,
+            ];
+            $data = $metaClass->verifySign($this->request->all(),$this->config->get('sign',$sign));
+            if($data['code'] !== 0){
+                return $this->response->json($data);
+            }
+
         }
-        if (!isset($data['timestamp']) || !$data['timestamp']) {
-            echo '发送的数据参数不合法';
-            die();
+        // 切面切入后，执行对应的方法会由此来负责
+        // $proceedingJoinPoint 为连接点，通过该类的 process() 方法调用原方法并获得结果
+        // 在调用前进行某些处理
+        $result = $proceedingJoinPoint->process();
+
+        if(!empty($proceedingJoinPoint->getAnnotationMetadata()->class)){
+            /**
+             * @var \AndPHP\HyperfSign\Annotation\Sign $metaClass
+             */
+            $metaClass = $proceedingJoinPoint->getAnnotationMetadata()->class[\AndPHP\HyperfSign\Annotation\Sign::class];
+
+            if(is_array($result) || is_object($result)){
+                $result = json_decode(json_encode($result),true);
+            }else{
+                return $result;
+            }
+            $sign = [
+                "key"        => "c4ca4238a0b923820dcc509a6f75849b",
+                "secret"     => "28c8edde3d61a0411511d3b1866f0636",
+                "expires_in" => 600,
+            ];
+            return $metaClass->getSign($result,$this->config->get('sign',$sign));
         }
-        // 验证请求， 10分钟失效
-        if (time() - $data['timestamp'] > $expires_in) {
-            echo '验证失效， 请重新发送请求';
-            die();
-        }
-        $sign = $data['sign'];
-        unset($data['sign']);
-        ksort($data);
-        $params = http_build_query($data);
-        // $secret是通过key在api的数据库中查询得到
-        $sign2 = md5($params . $secret);
-        if ($sign == $sign2) {
-            //die('验证通过');
-            return true;
-        } else {
-            //die('请求不合法');
-            return false;
-        }
+
+        return $result;
     }
 }

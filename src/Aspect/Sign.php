@@ -2,15 +2,24 @@
 
 
 namespace AndPHP\HyperfSign\Aspect;
+use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Annotation\Aspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
+
+use Hyperf\Di\Annotation\Inject;
 
 /**
  * @Aspect
  */
 class Sign extends AbstractAspect
 {
+    /**
+     * @Inject()
+     * @var ConfigInterface
+     */
+    private $config;
+
     public $annotations = [
         \AndPHP\HyperfSign\Annotation\Sign::class,
     ];
@@ -31,6 +40,11 @@ class Sign extends AbstractAspect
         }else{
             return $result;
         }
-        return $metaClass->getSign($result);
+        $sign = [
+            "key"        => "c4ca4238a0b923820dcc509a6f75849b",
+            "secret"     => "28c8edde3d61a0411511d3b1866f0636",
+            "expires_in" => 600,
+        ];
+        return $metaClass->getSign($result,$this->config->get('sign',$sign));
     }
 }
