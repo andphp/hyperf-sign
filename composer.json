@@ -1,0 +1,26 @@
+{
+    "name": "andphp/hyperf-sign",
+    "description": "Annotation Sign for Hyperf",
+    "keywords": [
+        "php",
+        "Hyperf",
+        "Annotation",
+        "Sign"
+    ],
+    "autoload": {
+        "psr-4": {
+            "AndPHP\\HyperfSign\\": "src/"
+        }
+    },
+    "type": "library",
+    "require": {
+        "php": ">=7.4"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Da Xiong",
+            "email": "417170808@qq.com"
+        }
+    ]
+}
