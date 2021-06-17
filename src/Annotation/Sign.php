@@ -4,6 +4,7 @@
 namespace AndPHP\HyperfSign\Annotation;
 
 use Hyperf\Contract\ConfigInterface;
+use Hyperf\Di\Annotation\Inject;
 use Hyperf\Di\Annotation\AbstractAnnotation;
 
 /**
@@ -15,22 +16,25 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 class Sign extends AbstractAnnotation
 {
     /**
-     * @Inject
+     * @Inject()
      * @var ConfigInterface
      */
-    protected $config;
+    private $config;
+
 
     // 获取sign
-    public function getSign($secret, $data) {
-        $key = $this->config->get('sign.key');
-        array_push($data,["key"=>$key]);
+    public function getSign(array $data) {
+        $secret = $this->config->get('sign.secret','secret');
+        $key = $this->config->get('sign.key','key');
+        var_dump($this->config);
+        array_push($data,["key"=>$key,'timestamp'=>time()]);
         // 对数组的值按key排序
         ksort($data);
         // 生成url的形式
         $params = http_build_query($data);
         // 生成sign
-        $sign = md5($params . $secret);
-        return $sign;
+        $data['sign'] = md5($params . $secret);
+        return $data;
     }
 
     /**
@@ -39,7 +43,7 @@ class Sign extends AbstractAnnotation
      * @param  [type] $data   [description]
      * @return [type]         [description]
      */
-    public function verifySign($data) {
+    public function verifySign(array $data) {
         $secret = $this->config->get('sign.secret');
         $expires_in = $this->config->get('sign.expires_in');
         // 验证参数中是否有签名

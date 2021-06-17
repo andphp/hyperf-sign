@@ -15,7 +15,8 @@
     "type": "library",
     "require": {
         "php": ">=7.4",
-        "hyperf/config": "^2.1"
+        "hyperf/config": "^2.1",
+        "hyperf/di": "^2.1"
     },
     "license": "MIT",
     "authors": [

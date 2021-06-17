@@ -31,7 +31,7 @@ class ConfigProvider
             'publish' => [
                 [
                     'id' => 'config',
-                    'description' => 'The config for wechat.',
+                    'description' => 'The config for sign.',
                     'source' => __DIR__ . '/../publish/sign.php',
                     'destination' => BASE_PATH . '/config/autoload/sign.php',
                 ],
