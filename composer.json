@@ -14,7 +14,8 @@
     },
     "type": "library",
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4",
+        "hyperf/config": "^2.1"
     },
     "license": "MIT",
     "authors": [
@@ -22,5 +23,13 @@
             "name": "Da Xiong",
             "email": "417170808@qq.com"
         }
-    ]
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "hyperf": {
+            "config": "AndPHP\\HyperfSign\\ConfigProvider"
+        }
+    }
 }
