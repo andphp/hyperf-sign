@@ -15,12 +15,24 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 class Sign extends AbstractAnnotation
 {
 
+    /**
+     * @var string
+     */
+    public $action;
+
+    public function __construct($value = null)
+    {
+        parent::__construct($value);
+        $this->bindMainProperty('action', $value);
+    }
+
     // 获取sign
-    public function getSign(array $data, array $signConfig)
+    public function gen(array $data, array $signConfig)
     {
 
-        $data += ["key"       => $signConfig['key'],
-                  'timestamp' => time()
+        $data += [
+            "key"       => $signConfig['key'],
+            'timestamp' => time()
         ];
         // 对数组的值按key排序
         ksort($data);
@@ -37,7 +49,7 @@ class Sign extends AbstractAnnotation
      * @param  [type] $data   [description]
      * @return [type]         [description]
      */
-    public function verifySign(array $param, array $signConfig)
+    public function verify(array $param, array $signConfig)
     {
         $data = [
             'code' => 401,
